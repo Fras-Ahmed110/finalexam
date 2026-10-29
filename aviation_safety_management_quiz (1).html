@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aviation Safety Management Quiz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        /* Custom styles for correct/incorrect highlighting */
+        .option-label {
+            transition: all 0.2s ease-in-out;
+        }
+        .correct-answer {
+            background-color: #dcfce7 !important; /* bg-green-100 */
+            border-color: #22c55e !important; /* border-green-500 */
+            color: #166534 !important; /* text-green-800 */
+        }
+        .incorrect-answer {
+            background-color: #fee2e2 !important; /* bg-red-100 */
+            border-color: #ef4444 !important; /* border-red-500 */
+            color: #991b1b !important; /* text-red-800 */
+        }
+        .missed-answer {
+            background-color: #fef08a !important; /* bg-yellow-200 */
+            border-color: #eab308 !important; /* border-yellow-500 */
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="text-gray-800 antialiased pb-16">
+
+ 
+    <!-- Quiz Content Container -->
+    <main class="max-w-4xl mx-auto mt-6 px-4">
+        <div class="bg-white rounded-2xl shadow-xl p-6 md:p-10 border border-gray-100">
+            <div class="flex justify-between items-end border-b-2 border-gray-100 pb-4 mb-8">
+                <h2 class="text-2xl md:text-3xl font-extrabold text-gray-800">Comprehensive Quiz</h2>
+                <span id="progress-text" class="text-sm font-bold text-blue-700 bg-blue-100 px-4 py-2 rounded-full shadow-sm">1 of 85</span>
+            </div>
+            
+            <div id="quiz-content" class="min-h-[250px]">
+                <!-- JavaScript will inject questions here -->
+            </div>
+            
+            <!-- Actions and Results -->
+            <div id="action-container" class="mt-8 border-t-2 border-gray-100 pt-6 flex justify-end">
+                <button id="next-btn" onclick="handleNext()" class="bg-blue-600 hover:bg-blue-700 text-white text-lg font-bold py-3 px-10 rounded-xl shadow-lg transition transform hover:-translate-y-1 w-full md:w-auto">
+                    Next Question
+                </button>
+            </div>
+            
+            <div id="result-display" class="hidden mt-8 p-6 rounded-2xl bg-indigo-50 border-2 border-indigo-200 shadow-inner text-center">
+                <h3 class="text-xl text-indigo-800 font-semibold mb-2">Your Results</h3>
+                <div class="text-4xl font-extrabold text-indigo-900">
+                    Score: <span id="score-text"></span>
+                    </div>
+                    <p id="feedback-text" class="mt-3 text-indigo-700 font-medium"></p>
+                    <button onclick="resetQuiz()" class="mt-6 text-sm font-semibold text-indigo-600 hover:text-indigo-800 underline">Try Again</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Data and Application Logic -->
+    <script>
+        // Database of all questions separated by lecture
+        const quizData = {
+            lec1: [
+                { q: "What does \"Safety\" in aviation mean?", opts: { A: "Study accidents", B: "Study all hazards", C: "Reducing risk to an acceptable level", D: "Compliance only" }, ans: "C" },
+                { q: "A hazard is:", opts: { A: "Past accident", B: "Source with potential to cause harm", C: "Risk consequence", D: "Pilot error" }, ans: "B" },
+                { q: "Risk is defined as:", opts: { A: "Hazard only", B: "Probability + severity of harm", C: "Severity only", D: "Likelihood alone" }, ans: "B" },
+                { q: "Which organization developed the Convention on International Civil Aviation?", opts: { A: "FAA", B: "IATA", C: "ICAO", D: "EASA" }, ans: "C" },
+                { q: "How often are ICAO charts/documents updated?", opts: { A: "Every year", B: "Every 28 days", C: "Every 10 years", D: "Every 3 months" }, ans: "B" },
+                { q: "Doc 7300 refers to:", opts: { A: "Safety Management Manual", B: "Chicago Convention", C: "Global Aviation Safety Plan", D: "Aerodrome Design" }, ans: "B" },
+                { q: "Which Annex deals with Personnel Licensing?", opts: { A: "Annex 6", B: "Annex 8", C: "Annex 1", D: "Annex 11" }, ans: "C" },
+                { q: "Which Annex covers Operation of Aircraft?", opts: { A: "Annex 13", B: "Annex 14", C: "Annex 6", D: "Annex 8" }, ans: "C" },
+                { q: "Annex 13 is about:", opts: { A: "Airworthiness", B: "Air Traffic Services", C: "Accident and Incident Investigation", D: "Aerodromes" }, ans: "C" },
+                { q: "Annex 14 relates to:", opts: { A: "Aerodromes", B: "Safety Oversight", C: "Personnel Licensing", D: "CRM" }, ans: "A" },
+                { q: "Pre-1970s focus of safety was:", opts: { A: "Human error", B: "System approach", C: "Mechanical faults", D: "Organizational culture" }, ans: "C" },
+                { q: "The 1956 Grand Canyon accident led to formation of:", opts: { A: "ICAO", B: "FAA", C: "EASA", D: "IATA" }, ans: "B" },
+                { q: "The Human Factors Era was mainly between:", opts: { A: "1920–1950", B: "1970–1990", C: "2000–2010", D: "1950–1960" }, ans: "B" },
+                { q: "CRM was introduced to manage:", opts: { A: "Aircraft design", B: "Fatigue and human performance", C: "Engine maintenance", D: "Meteorology" }, ans: "B" },
+                { q: "The Tenerife disaster (1977) emphasized:", opts: { A: "Airport design", B: "Communication & coordination failures", C: "Mechanical faults", D: "Fuel planning" }, ans: "B" },
+                { q: "From 2000s, aviation safety moved to:", opts: { A: "Technical approach", B: "Human factors only", C: "Systemic & proactive approach", D: "Accident investigation only" }, ans: "C" },
+                { q: "Which Annex formally introduced SMS requirements in 2013?", opts: { A: "Annex 1", B: "Annex 19", C: "Annex 8", D: "Annex 14" }, ans: "B" },
+                { q: "ICAO required SMS implementation in:", opts: { A: "1997", B: "2006", C: "2013", D: "1977" }, ans: "B" },
+                { q: "SMS is implemented at the level of:", opts: { A: "State", B: "Airlines & airports", C: "ICAO", D: "Pilots only" }, ans: "B" },
+                { q: "SSP is implemented at the level of:", opts: { A: "Organization", B: "State", C: "Airport", D: "Airlines only" }, ans: "B" },
+                { q: "Which one is broader in scope?", opts: { A: "SMS", B: "SSP", C: "CRM", D: "None" }, ans: "B" },
+                { q: "Which one is mandatory under ICAO for all States?", opts: { A: "SMS", B: "SSP", C: "CRM", D: "Hazard reporting" }, ans: "B" },
+                { q: "Reactive safety means:", opts: { A: "Predicting hazards", B: "Investigating after accidents", C: "Reporting hazards before accidents", D: "Collecting data only" }, ans: "B" },
+                { q: "Proactive safety means:", opts: { A: "Waiting for incidents", B: "Predicting and preventing hazards", C: "Relying on compliance", D: "Ignoring near misses" }, ans: "B" },
+                { q: "Predictive safety uses:", opts: { A: "Past accidents only", B: "Data analytics and hazard trends", C: "Visual inspections", D: "Flight crew intuition" }, ans: "B" },
+                { q: "Modern SMS relies on:", opts: { A: "Paper reports", B: "Data-driven predictive analytics", C: "Old technical manuals", D: "Compliance only" }, ans: "B" },
+                { q: "\"Just Culture\" means:", opts: { A: "Zero tolerance for errors", B: "Encouraging reporting without fear", C: "Rewarding pilots only", D: "No investigation" }, ans: "B" },
+                { q: "Safety oversight by ICAO is done through:", opts: { A: "Doc 9859", B: "Doc 9734", C: "Doc 7300", D: "Doc 10004" }, ans: "B" },
+                { q: "The Global Aviation Safety Plan is:", opts: { A: "Annex 14", B: "Doc 10004", C: "Doc 9859", D: "Annex 6" }, ans: "B" },
+                { q: "Safety Management Manual is:", opts: { A: "Doc 9859", B: "Doc 7300", C: "Doc 10059", D: "Doc 8335" }, ans: "A" }
+            ],
+            lec2: [
+                { q: "What does SMS stand for?", opts: { A: "Safety Monitoring System", B: "Safety Management System", C: "Security Management Standard", D: "System for Managing Services" }, ans: "B" },
+                { q: "The main purpose of SMS in aviation is:", opts: { A: "To reduce fuel costs", B: "To reduce accidents and incidents", C: "To speed up operations", D: "To replace regulations" }, ans: "B" },
+                { q: "Which organization provides the official definition of SMS?", opts: { A: "WHO", B: "ICAO", C: "IATA", D: "ISO" }, ans: "B" },
+                { q: "SMS is considered a __________ approach to safety.", opts: { A: "Random", B: "Business-like", C: "Optional", D: "Historical" }, ans: "B" },
+                { q: "In SMS, hazards should be:", opts: { A: "Ignored", B: "Hidden", C: "Identified and managed", D: "Reported only after accidents" }, ans: "C" },
+                { q: "The ICAO definition of SMS includes:", opts: { A: "Organizational structures and accountabilities", B: "Ticketing and passenger services", C: "Cabin crew scheduling", D: "Aircraft fueling" }, ans: "A" },
+                { q: "“Just Culture” in SMS encourages:", opts: { A: "Punishment for errors", B: "Open reporting without fear", C: "Reducing passenger complaints", D: "Ignoring hazards" }, ans: "B" },
+                { q: "Which of the following is an example of aviation safety?", opts: { A: "PPE for engineers", B: "Aircraft maintenance for safe operation", C: "Passenger baggage screening", D: "Quality audits" }, ans: "B" },
+                { q: "OHS in aviation mainly protects:", opts: { A: "Passengers", B: "Aircraft only", C: "Aviation workers", D: "Air Traffic Controllers only" }, ans: "C" },
+                { q: "An accident in aviation is defined when:", opts: { A: "The aircraft is delayed", B: "A person is fatally or seriously injured", C: "Weather changes suddenly", D: "Flight is cancelled" }, ans: "B" },
+                { q: "Which is NOT a benefit of SMS?", opts: { A: "Proactive hazard mitigation", B: "Lower insurance premiums", C: "Improved safety culture", D: "Increasing ticket prices" }, ans: "D" },
+                { q: "Accident investigation falls under:", opts: { A: "SMS", B: "OHS", C: "Quality Management", D: "Aviation Security" }, ans: "A" },
+                { q: "Which is an example of OHS?", opts: { A: "Accident reporting system", B: "Passenger screening", C: "Using helmets and ear protection", D: "Data-driven decisions" }, ans: "C" },
+                { q: "Quality in aviation focuses on:", opts: { A: "Standards and procedures", B: "Hazard reporting", C: "Accident prevention", D: "Security checks" }, ans: "A" },
+                { q: "Security in aviation means:", opts: { A: "Preventing unlawful acts", B: "Monitoring weather", C: "Reducing maintenance costs", D: "Reporting hazards" }, ans: "A" },
+                { q: "Which of the following is intentional threat protection?", opts: { A: "SMS", B: "OHS", C: "Quality", D: "Security" }, ans: "D" },
+                { q: "Which statement best describes “System” in SMS?", opts: { A: "Random actions by staff", B: "Organized set of policies, procedures, and people", C: "Only top management actions", D: "Cabin services only" }, ans: "B" },
+                { q: "“Management” in SMS involves:", opts: { A: "Monitoring only", B: "Planning, organizing, and allocating resources", C: "Technical maintenance", D: "Ticketing operations" }, ans: "B" },
+                { q: "Which of these is a financial benefit of SMS?", opts: { A: "Cost savings and lower insurance", B: "Higher accident rate", C: "Increased operational delays", D: "More expensive litigation" }, ans: "A" },
+                { q: "Enhanced decision-making in SMS comes from:", opts: { A: "Luck", B: "Data-driven safety performance", C: "Reducing maintenance staff", D: "Ignoring hazards" }, ans: "B" },
+                { q: "A missing aircraft is considered:", opts: { A: "An incident", B: "A delay", C: "An accident", D: "Quality failure" }, ans: "C" },
+                { q: "Improved employee morale is a benefit of:", opts: { A: "SMS", B: "OHS only", C: "Quality Management", D: "Security" }, ans: "A" },
+                { q: "Safety Management System combines:", opts: { A: "Safety + System + Management", B: "Security + Safety + Maintenance", C: "Quality + Operations + Standards", D: "OHS + Quality + ICAO" }, ans: "A" },
+                { q: "“Accident/incident reporting” is part of:", opts: { A: "SMS", B: "OHS", C: "Quality", D: "Security" }, ans: "A" },
+                { q: "Which document provides SMS guidelines?", opts: { A: "Annex 19", B: "Annex 13", C: "Annex 14", D: "Annex 1" }, ans: "A" },
+                { q: "PPE such as helmets and ear protection is part of:", opts: { A: "SMS", B: "OHS", C: "Quality", D: "Security" }, ans: "B" },
+                { q: "Enhanced brand reputation comes from:", opts: { A: "Strong SMS program", B: "Passenger baggage screening", C: "Ticket discounts", D: "Hiring more staff" }, ans: "A" },
+                { q: "Aviation Security includes:", opts: { A: "Passenger and baggage screening", B: "Aircraft maintenance", C: "Using PPE in hangars", D: "Quality audits" }, ans: "A" },
+                { q: "Which one is proactive in SMS?", opts: { A: "Hazard identification before accidents", B: "Waiting for accidents to happen", C: "Blaming staff", D: "Canceling flights" }, ans: "A" },
+                { q: "“Safety = Goal, System = Process, Management = Leadership” is the essence of:", opts: { A: "OHS", B: "Quality Management", C: "SMS", D: "Aviation Security" }, ans: "C" }
+            ],
+            lec3: [
+                { q: "The main focus of the Technical Era (pre-1970s) was:", opts: { A: "Human error", B: "System-wide integration", C: "Aircraft mechanical reliability", D: "Safety culture" }, ans: "C" },
+                { q: "The 1977 Tenerife disaster highlighted the importance of:", opts: { A: "Stronger aircraft engines", B: "Better airfield design", C: "Crew Resource Management (CRM)", D: "Weather forecasting" }, ans: "C" },
+                { q: "ICAO mandated the implementation of SMS in which year?", opts: { A: "1958", B: "1977", C: "2006", D: "2013" }, ans: "C" },
+                { q: "Annex 19 to the ICAO Convention deals with:", opts: { A: "Airworthiness of aircraft", B: "Personnel licensing", C: "Safety Management", D: "Aerodromes" }, ans: "C" },
+                { q: "A hazard is defined as:", opts: { A: "Past accident", B: "Source with potential to cause harm", C: "Probability of an event", D: "Severe consequence only" }, ans: "B" },
+                { q: "Risk is calculated by combining:", opts: { A: "Hazard + Accident", B: "Probability + Severity", C: "Error + Violation", D: "Hazard + Control" }, ans: "B" },
+                { q: "SMS is described by ICAO as:", opts: { A: "A legal requirement only", B: "A systematic approach to managing safety", C: "A replacement for regulations", D: "A voluntary safety" }, ans: "B" },
+                { q: "Which of these is a benefit of SMS?", opts: { A: "Increased complexity", B: "Reduced hazard reporting", C: "Improved safety culture", D: "Higher accident costs" }, ans: "C" },
+                { q: "Occupational Health & Safety (OHS) in aviation focuses on:", opts: { A: "Protecting passengers only", B: "Preventing unlawful acts", C: "Protecting aviation workers from workplace hazards", D: "Improving ticketing services" }, ans: "C" },
+                { q: "The Swiss-Cheese Model was developed by:", opts: { A: "James Reason", B: "Wilbur Wright", C: "ICAO", D: "Boeing" }, ans: "A" },
+                { q: "The Grand Canyon mid-air collision in 1956 led to the creation of:", opts: { A: "FAA", B: "ICAO", C: "EASA", D: "IATA" }, ans: "A" },
+                { q: "Annex 13 covers:", opts: { A: "Air Traffic Services", B: "Accident and Incident Investigation", C: "Aerodromes", D: "Safety Oversight" }, ans: "B" },
+                { q: "In the SHELL model, H stands for:", opts: { A: "Human", B: "Hardware", C: "Hazard", D: "Handling" }, ans: "B" },
+                { q: "In the SHELL model, S refers to:", opts: { A: "Software (procedures/manuals)", B: "Safety", C: "Systems", D: "Security" }, ans: "A" },
+                { q: "Which accident showed the consequences of miscommunication in the cockpit?", opts: { A: "Tenerife disaster 1977", B: "Air France 447", C: "Concorde crash 2000", D: "United 232 Sioux City" }, ans: "A" },
+                { q: "Which ICAO Annex deals with Aerodromes?", opts: { A: "Annex 8", B: "Annex 14", C: "Annex 11", D: "Annex 6" }, ans: "B" },
+                { q: "Which ICAO Annex deals with Air Traffic Services?", opts: { A: "Annex 11", B: "Annex 1", C: "Annex 19", D: "Annex 2" }, ans: "A" },
+                { q: "What is the difference between SMS and SSP?", opts: { A: "SMS is at the state level; SSP at the organization level", B: "SMS is at the organization level; SSP at the state level", C: "Both are identical", D: "SMS is voluntary, SSP is mandatory" }, ans: "B" },
+                { q: "Which of the following is an example of a hazard?", opts: { A: "A past crash", B: "Fuel leak on a runway", C: "Number of passengers", D: "Flight delay report" }, ans: "B" },
+                { q: "Which of the following is an example of a risk?", opts: { A: "“Fuel leak may cause fire/explosion”", B: "Writing a checklist", C: "Hiring more staff", D: "Flight plan filing" }, ans: "A" },
+                { q: "The SHELL Model was first introduced by:", opts: { A: "Elwyn Edwards", B: "Frank Hawkins", C: "James Reason", D: "ICAO" }, ans: "A" },
+                { q: "The Swiss-Cheese Model explains accidents as:", opts: { A: "Single-point human error", B: "Alignment of weaknesses in multiple layers of defense", C: "Random failures only", D: "Poor training alone" }, ans: "B" },
+                { q: "A benefit of SMS is cost savings because:", opts: { A: "More rules reduce training", B: "Fewer accidents lower repair, legal, and insurance costs", C: "Pilots work longer hours", D: "Safety culture is ignored" }, ans: "B" },
+                { q: "The main purpose of Crew Resource Management (CRM) is:", opts: { A: "Reduce paperwork", B: "Improve teamwork and communication", C: "Simplify checklists", D: "Manage aircraft hardware" }, ans: "B" },
+                { q: "Which of the following is an example of SMS application in Egypt?", opts: { A: "EgyptAir implementing fatigue risk management", B: "Building a new terminal", C: "Airspace redesign for capacity", D: "Selling cheaper tickets" }, ans: "A" }
+            ]
+        };
+
+        let allQuestions = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let isSubmitted = false;
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', () => {
+            // Merge all questions into one continuous list
+            allQuestions = [...quizData.lec1, ...quizData.lec2, ...quizData.lec3];
+            startQuiz();
+        });
+
+        function startQuiz() {
+            currentQuestionIndex = 0;
+            userAnswers = new Array(allQuestions.length).fill(null);
+            isSubmitted = false;
+            
+            // Reset UI
+            document.getElementById('result-display').classList.add('hidden');
+            document.getElementById('action-container').classList.remove('hidden');
+            
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            const container = document.getElementById('quiz-content');
+            const item = allQuestions[currentQuestionIndex];
+            const qNum = currentQuestionIndex + 1;
+            
+            // Update Progress
+            document.getElementById('progress-text').textContent = `Question ${qNum} of ${allQuestions.length}`;
+            
+            // Update Button
+            const nextBtn = document.getElementById('next-btn');
+            if (currentQuestionIndex === allQuestions.length - 1) {
+                nextBtn.textContent = 'Submit Quiz & Get Score';
+                nextBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                nextBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+            } else {
+                nextBtn.textContent = 'Next Question';
+                nextBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                nextBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+            }
+
+            // Build options HTML
+            let optionsHtml = '';
+            for (const [key, value] of Object.entries(item.opts)) {
+                optionsHtml += `
+                    <label id="label-${key}" class="option-label flex items-start p-4 rounded-xl border-2 border-gray-100 cursor-pointer hover:bg-blue-50 hover:border-blue-200 transition-all duration-200">
+                        <div class="flex items-center h-6 mt-0.5">
+                            <input type="radio" name="currentQ" value="${key}" onchange="evaluateAnswer('${key}')" class="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500">
+                        </div>
+                        <div class="ml-3 text-lg">
+                            <span class="font-bold mr-2 text-gray-700">${key})</span> ${value}
+                        </div>
+                    </label>
+                `;
+            }
+
+            container.innerHTML = `
+                <div class="animate-fade-in">
+                    <h3 class="text-xl md:text-2xl font-bold text-gray-900 mb-6 leading-relaxed">
+                        <span class="text-blue-600 mr-2">${qNum}.</span> ${item.q}
+                    </h3>
+                    <div class="space-y-3">
+                        ${optionsHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        function evaluateAnswer(selectedKey) {
+            const item = allQuestions[currentQuestionIndex];
+            const correctAns = item.ans;
+            
+            // Save the answer
+            userAnswers[currentQuestionIndex] = selectedKey;
+
+            // Disable all radio buttons
+            const radios = document.querySelectorAll('input[name="currentQ"]');
+            radios.forEach(radio => radio.disabled = true);
+
+            // Apply highlighting
+            for (const key of Object.keys(item.opts)) {
+                const label = document.getElementById(`label-${key}`);
+                
+                // Remove interactive hover classes once an answer is locked in
+                label.classList.remove('cursor-pointer', 'hover:bg-blue-50', 'hover:border-blue-200');
+                
+                if (key === correctAns) {
+                    label.classList.add('correct-answer'); // Highlight correct answer in green
+                } else if (key === selectedKey && key !== correctAns) {
+                    label.classList.add('incorrect-answer'); // Highlight wrong selection in red
+                }
+            }
+        }
+
+        function handleNext() {
+            if (!userAnswers[currentQuestionIndex]) {
+                alert("Please select an answer to continue.");
+                return;
+            }
+
+            // Save the answer (Already saved in evaluateAnswer, but keeping structure intact)
+            if (currentQuestionIndex < allQuestions.length - 1) {
+                currentQuestionIndex++;
+                renderQuestion();
+            } else {
+                submitQuiz();
+            }
+        }
+
+        function submitQuiz() {
+            if (isSubmitted) return;
+            
+            let score = 0;
+            allQuestions.forEach((item, index) => {
+                if (userAnswers[index] === item.ans) {
+                    score++;
+                }
+            });
+
+            // Display Results
+            const resultDiv = document.getElementById('result-display');
+            const scoreText = document.getElementById('score-text');
+            const feedbackText = document.getElementById('feedback-text');
+            const actionContainer = document.getElementById('action-container');
+            const quizContent = document.getElementById('quiz-content');
+            
+            const percentage = (score / allQuestions.length) * 100;
+            scoreText.textContent = `${score} / ${allQuestions.length}`;
+            
+            if (percentage === 100) {
+                feedbackText.textContent = "Outstanding! You got a perfect score.";
+            } else if (percentage >= 80) {
+                feedbackText.textContent = "Great job! You have a solid understanding of the material.";
+            } else if (percentage >= 60) {
+                feedbackText.textContent = "Good effort, but there is room for improvement.";
+            } else {
+                feedbackText.textContent = "Keep studying! Review the course material and try again.";
+            }
+
+            quizContent.innerHTML = ''; // Clear question container
+            actionContainer.classList.add('hidden'); // Hide next button
+            resultDiv.classList.remove('hidden'); // Show results
+            isSubmitted = true;
+        }
+
+        function resetQuiz() {
+            startQuiz();
+        }
+    </script>
+</body>
+</html>
